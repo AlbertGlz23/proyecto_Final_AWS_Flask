@@ -7,6 +7,8 @@ alumnos_bp = Blueprint('alumnos', __name__)
 CAMPOS_VALIDOS = {'nombres', 'apellidos', 'matricula', 'promedio', 'password'}
 CAMPOS_REQUERIDOS = {'nombres', 'apellidos', 'matricula', 'promedio', 'password'}
 
+# --- CRUD BASE ---
+
 @alumnos_bp.route('', methods=['GET'])
 def get_all_alumnos():
     alumnos = Alumno.query.all()
@@ -100,6 +102,33 @@ def send_email(id):
     alumno = Alumno.query.get(id)
     if not alumno:
         return jsonify({"error": "Not Found"}), 404
+
+    try:
+        sns = boto3.client(
+            'sns',
+            aws_access_key_id=current_app.config['AWS_ACCESS_KEY'],
+            aws_secret_access_key=current_app.config['AWS_SECRET_KEY'],
+            aws_session_token=current_app.config['AWS_SESSION_TOKEN'],
+            region_name=current_app.config['AWS_REGION']
+        )
+
+        mensaje = f"""
+Información del Alumno:
+-----------------------
+Nombre: {alumno.nombres} {alumno.apellidos}
+Matrícula: {alumno.matricula}
+Promedio: {alumno.promedio}
+        """
+
+        sns.publish(
+            TopicArn=current_app.config['SNS_TOPIC_ARN'],
+            Message=mensaje,
+            Subject=f"Calificaciones - {alumno.nombres} {alumno.apellidos}"
+        )
+
+    except Exception as e:
+        return jsonify({"error": "Error al enviar notificación", "detalle": str(e)}), 500
+
     return jsonify({"mensaje": "Email enviado"}), 200
 
 @alumnos_bp.route('/<int:id>/fotoPerfil', methods=['POST'])
