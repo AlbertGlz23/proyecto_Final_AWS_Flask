@@ -1,0 +1,19 @@
+# Credenciales y variables de entorno
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# Logs
+*.log
+log.txt
+
+# IDEs
+.vscode/
+.idea/
